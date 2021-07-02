@@ -9,7 +9,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @Data
 @ToString
-public class ConfirmedCasesGlobal {
+public class CasesConfirmedGlobally {
     private String countryOrRegion;
     private String provinceOrState;
     private String latitude;

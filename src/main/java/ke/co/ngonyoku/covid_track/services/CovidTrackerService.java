@@ -1,6 +1,7 @@
 package ke.co.ngonyoku.covid_track.services;
 
-import ke.co.ngonyoku.covid_track.models.ConfirmedCasesGlobal;
+import ke.co.ngonyoku.covid_track.models.CasesConfirmedGlobally;
+import ke.co.ngonyoku.covid_track.models.DeathsConfirmedGlobally;
 import lombok.Getter;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -21,47 +22,74 @@ import java.util.List;
 @Getter
 public class CovidTrackerService {
     public static final String CONFIRMED_CASES_GLOBAL_URL = "https://raw.githubusercontent.com/Ngonyoku/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv";
-    private List<ConfirmedCasesGlobal> confirmedCasesGlobalList = new ArrayList<>();
+    public static final String CONFIRMED_DEATHS_GLOBAL_URL = "https://raw.githubusercontent.com/Ngonyoku/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv";
+
+
+        private List<CasesConfirmedGlobally> casesConfirmedGloballyList = new ArrayList<>();
+    private List<DeathsConfirmedGlobally> deathsConfirmedGloballyList = new ArrayList<>();
+
+    private Iterable<CSVRecord> fetchRecordFromCSV(String URL) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient(); //Create a HttpClient
+        URI generatedURI = URI.create(URL);//Extract the URI from our CSV Url
+        HttpRequest request
+                = HttpRequest
+                .newBuilder()
+                .uri(generatedURI)
+                .build();
+
+        /*Get the Response*/
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        /*Get the Response Response Body*/
+        String responseBody = response.body();
+        StringReader stringReader = new StringReader(responseBody);
+
+        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(stringReader);
+
+        return records;
+    }
 
     @PostConstruct //This method will be called when the application boots
     @Scheduled(cron = "* 0 * * * *") // The method will be called every 5 seconds according to the cron expression
     public void fetchData() throws IOException, InterruptedException {
-        List<ConfirmedCasesGlobal> newConfirmedCasesGlobalList = new ArrayList<>();
+        List<CasesConfirmedGlobally> newCasesConfirmedGloballyList = new ArrayList<>();
+        List<DeathsConfirmedGlobally> newDeathConfirmedGlobally = new ArrayList<>();
 
-        HttpClient httpClient = HttpClient.newHttpClient();
-        URI confirmedCaseURI = URI.create(CONFIRMED_CASES_GLOBAL_URL); // Get the URI from the URL
-        HttpRequest request = HttpRequest
-                .newBuilder()
-                .uri(confirmedCaseURI)
-                .build();
-
-        /*Get the Response*/
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-        /*Covert the body to StringReader*/
-        StringReader confirmedCasesBodyReader = new StringReader(response.body());
-
-        Iterable<CSVRecord> confirmedCasesRecord =
-                CSVFormat
-                        .DEFAULT
-                        .withFirstRecordAsHeader()
-                        .parse(confirmedCasesBodyReader);
-        /*Loop through the Records*/
-        for (CSVRecord record : confirmedCasesRecord) {
+        /*Loop through the Confirmed Cases Records*/
+        for (CSVRecord record : fetchRecordFromCSV(CONFIRMED_CASES_GLOBAL_URL)) {
             /*The last Column contains the latest covid cases*/
             int lastColumn = Integer.parseInt(record.get(record.size() - 1));
-
             /*Create Instances*/
-            ConfirmedCasesGlobal confirmedCasesGlobal = new ConfirmedCasesGlobal();
-            confirmedCasesGlobal.setProvinceOrState(record.get("Province/State"));
-            confirmedCasesGlobal.setCountryOrRegion(record.get("Country/Region"));
-            confirmedCasesGlobal.setLatitude(record.get("Lat"));
-            confirmedCasesGlobal.setLatitude(record.get("Long"));
-            confirmedCasesGlobal.setLatestTotalCasesReported(lastColumn);
+            CasesConfirmedGlobally casesConfirmedGlobally = new CasesConfirmedGlobally(
+                    record.get("Country/Region"), //CountryOrRegion
+                    record.get("Province/State"), //ProvinceOrState
+                    record.get("Lat"), //Latitude
+                    record.get("Long"), //Longitude
+                    lastColumn //Latest Cases Reported
+            );
 
-            newConfirmedCasesGlobalList.add(confirmedCasesGlobal); //Populate our List with the data
+            newCasesConfirmedGloballyList.add(casesConfirmedGlobally); //Populate our List with the data
         }
 
-        this.confirmedCasesGlobalList = newConfirmedCasesGlobalList; //Update the current list of cases
+        /*Loop through the Confirmed Deaths Records*/
+        for (CSVRecord record : fetchRecordFromCSV(CONFIRMED_DEATHS_GLOBAL_URL)) {
+            int lastColumn = Integer.parseInt(record.get(record.size() - 1));//Get recent updates in the last column
+            /*Create the Instances*/
+            DeathsConfirmedGlobally deathsConfirmedGlobally =
+                    new DeathsConfirmedGlobally(
+                            record.get("Country/Region"), //CountryOrRegion
+                            record.get("Province/State"), //ProvinceOrState
+                            record.get("Lat"), //Latitude
+                            record.get("Long"), //Longitude
+                            lastColumn //Latest Cases Reported
+                    );
+
+            newDeathConfirmedGlobally.add(deathsConfirmedGlobally);//Populate our List
+        }
+
+        /*Update the current list of cases*/
+        this.casesConfirmedGloballyList = newCasesConfirmedGloballyList;
+        this.deathsConfirmedGloballyList = newDeathConfirmedGlobally;
+
     }
 }

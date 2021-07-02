@@ -28,40 +28,63 @@
         <div class="col-xs-12 col-sm-12 col-md-6 col-lg-4 text-danger ">
             <div>
                 <h2>DECEASED</h2>
-                <h1 class="display-4" th:text="${totalCasesReported}"></h1>
+                <h1 class="display-4" th:text="${totalDeathsReported}"></h1>
                 <hr class="my-4">
-                <p class="lead">This is the sum of all the total number of reported cases as of today</p>
+                <p class="lead">This is the sum of all the total number of reported deaths as of today</p>
             </div>
         </div>
 
-        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 text-success ">
-            <div>
-                <h2>RECOVERED</h2>
-                <h1 class="display-4" th:text="${totalCasesReported}"></h1>
-                <hr class="my-4">
-                <p class="lead">This is the sum of all the total number of reported cases as of today</p>
-            </div>
-        </div>
+        <!--        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 text-success ">-->
+        <!--            <div>-->
+        <!--                <h2>RECOVERED</h2>-->
+        <!--                <h1 class="display-4" th:text="${totalCasesReported}"></h1>-->
+        <!--                <hr class="my-4">-->
+        <!--                <p class="lead">This is the sum of all the total number of reported cases as of today</p>-->
+        <!--            </div>-->
+        <!--        </div>-->
     </div>
 </div>
 
-<table class="table table-bordered table-hover">
-    <!--    Confirmed Global Cases-->
-    <h3 class="padding">GLOBALLY CONFIRMED CASES</h3>
-    <thead class="thead-light">
-    <tr>
-        <th>COUNTRY/REGION</th>
-        <th>STATE</th>
-        <th>CONFIRMED CASES</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="cases : ${confirmedCasesList}">
-        <td th:text="${cases.countryOrRegion}"></td>
-        <td th:text="${cases.provinceOrState}"></td>
-        <td th:text="${cases.latestTotalCasesReported}"></td>
-    </tr>
-    </tbody>
-</table>
+<!--Reported Cases Table-->
+<div class="table-responsive">
+    <table class="table table-bordered table-hover table-sm table-primary">
+        <!--    Confirmed Global Cases-->
+        <h3 class="padding">GLOBALLY CONFIRMED CASES</h3>
+        <thead class="thead-light">
+        <tr>
+            <th>COUNTRY/REGION</th>
+            <th>STATE</th>
+            <th>CONFIRMED CASES</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="cases : ${confirmedCasesList}">
+            <td th:text="${cases.countryOrRegion}"></td>
+            <td th:text="${cases.provinceOrState}"></td>
+            <td th:text="${cases.latestTotalCasesReported}" class="text-primary"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!--Deceased Cases Reported-->
+    <table class="table table-bordered table-hover table-sm table-danger">
+        <!--    Confirmed Global Cases-->
+        <h3 class="padding">GLOBALLY CONFIRMED DEATHS</h3>
+        <thead class="thead-light">
+        <tr>
+            <th>COUNTRY/REGION</th>
+            <th>STATE</th>
+            <th>DECEASED</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="deaths : ${confirmedDeathsList}">
+            <td th:text="${deaths.countryOrRegion}"></td>
+            <td th:text="${deaths.provinceOrState}"></td>
+            <td th:text="${deaths.totalDeathsConfirmed}" class="text-danger"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>
