@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Covid-Track</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+          integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+</head>
+<body class="container">
+<h1 th:text="${heading}" class="text-center"></h1>
+
+<!--    Navigation-->
+
+<!--    Heading-->
+<h1>Covid-Track</h1>
+<div class="col-12">
+    <div class="row jumbotron">
+        <!--            Total Reported cases-->
+        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-4 text-primary">
+            <div>
+                <h2>CONFIRMED CASES</h2>
+                <h1 class="display-4" th:text="${totalCasesReported}"></h1>
+                <hr class="my-4">
+                <p class="lead">This is the sum of all the total number of reported cases as of today</p>
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-12 col-md-6 col-lg-4 text-danger ">
+            <div>
+                <h2>DECEASED</h2>
+                <h1 class="display-4" th:text="${totalCasesReported}"></h1>
+                <hr class="my-4">
+                <p class="lead">This is the sum of all the total number of reported cases as of today</p>
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-4 text-success ">
+            <div>
+                <h2>RECOVERED</h2>
+                <h1 class="display-4" th:text="${totalCasesReported}"></h1>
+                <hr class="my-4">
+                <p class="lead">This is the sum of all the total number of reported cases as of today</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table class="table table-bordered table-hover">
+    <!--    Confirmed Global Cases-->
+    <h3 class="padding">GLOBALLY CONFIRMED CASES</h3>
+    <thead class="thead-light">
+    <tr>
+        <th>COUNTRY/REGION</th>
+        <th>STATE</th>
+        <th>CONFIRMED CASES</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="cases : ${confirmedCasesList}">
+        <td th:text="${cases.countryOrRegion}"></td>
+        <td th:text="${cases.provinceOrState}"></td>
+        <td th:text="${cases.latestTotalCasesReported}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
