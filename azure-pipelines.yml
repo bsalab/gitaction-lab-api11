@@ -31,8 +31,8 @@ steps:
     jdkArchitectureOption: 'x64'
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    codeCoverageToolOption: JaCoCo
-    goals: 'clean verify sonar:sonar'
+    goals: 'package'
+    sonarQubeRunAnalysis: true
 
 
 - task: SonarCloudAnalyze@1
@@ -41,3 +41,18 @@ steps:
 - task: SonarCloudPublish@1
   inputs:
     pollingTimeoutSec: '300'
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+  inputs:
+    SourceFolder: '$(system.defaultworkingdirectory)'
+    Contents: '**/*.jar'
+    TargetFolder: '$(build.artifactstagingdirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: spring-boot-demo'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'spring-boot-demo'
+    publishLocation: 'Container'
+    StoreAsTar: true
