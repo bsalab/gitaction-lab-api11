@@ -56,3 +56,10 @@ steps:
     ArtifactName: 'spring-boot-demo'
     publishLocation: 'Container'
     StoreAsTar: true
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'Docker_Hub'
+    repository: 'spring-boot-demo'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
