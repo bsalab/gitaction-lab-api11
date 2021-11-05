@@ -25,9 +25,15 @@ steps:
   inputs:
     SonarCloud: 'Solar_Cloud'
     organization: '0062180634'
-    scannerMode: 'MSBuild'
-    projectKey: '0062180634_bm-lab-api'
-    projectName: 'bm-lab-api'
+#    scannerMode: 'MSBuild'
+#    projectKey: '0062180634_bm-lab-api'
+#    projectName: 'bm-lab-api'
+    scannerMode: 'Other'
+    extraProperties: |
+      # Additional properties that will be passed to the scanner, 
+      # Put one key=value per line, example:
+      # sonar.exclusions=**/*.bin
+      sonar.projectKey=0062180634_bm-lab-api
 
 
 - task: Maven@3
