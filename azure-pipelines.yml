@@ -81,6 +81,6 @@ steps:
 - task: AzureWebAppContainer@1
   displayName: 'Azure API App on Container Deploy'
   inputs:
-    azureSubscription: '90041d35-2f63-4619-a466-8e3057988612'
+    azureSubscription: 'BSA Department(90041d35-2f63-4619-a466-8e3057988612)'
     appName: 'bm-api-springboot-demo'
     containers: 'docker pull birdmodify/spring-boot-demo11:latest'
