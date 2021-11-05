@@ -12,7 +12,7 @@ pool:
 steps:
 - task: SonarCloudPrepare@1
   inputs:
-    SonarCloud: 'Solar_Cloud'
+    SonarCloud: 'Sonar_Cloud'
     organization: 'bm-bsa-lab'
     scannerMode: 'Other'
     extraProperties: |
