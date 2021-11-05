@@ -13,13 +13,13 @@ steps:
 - task: SonarCloudPrepare@1
   inputs:
     SonarCloud: 'Sonar_Cloud'
-    organization: 'bm-bsa-lab'
+    organization: 'birdmodify69'
     scannerMode: 'Other'
     extraProperties: |
       # Additional properties that will be passed to the scanner, 
       # Put one key=value per line, example:
       # sonar.exclusions=**/*.bin
-      sonar.projectKey=bm-bsa-lab_bm-lab-api
+      sonar.projectKey=birdmodify69_spring-boot-demo11
 
 
 - task: Maven@3
