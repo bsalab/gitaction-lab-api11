@@ -10,24 +10,10 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-#- task: SonarCloudPrepare@1
-#  inputs:
-#    SonarCloud: 'SonarQ'
-#    organization: 'birdmodify69'
-#    scannerMode: 'Other'
-#    extraProperties: |
-#      # Additional properties that will be passed to the scanner, 
-#      # Put one key=value per line, example:
-#      # sonar.exclusions=**/*.bin
-#      sonar.projectKey=birdmodify69_spring-boot-demo11
-
 - task: SonarCloudPrepare@1
   inputs:
     SonarCloud: 'Solar_Cloud'
-    organization: '0062180634'
-#    scannerMode: 'MSBuild'
-#    projectKey: '0062180634_bm-lab-api'
-#    projectName: 'bm-lab-api'
+    organization: 'bm-bsa-lab'
     scannerMode: 'Other'
     extraProperties: |
       # Additional properties that will be passed to the scanner, 
