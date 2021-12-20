@@ -1,0 +1,227 @@
+# This workflow will build a package using Maven and then publish it to GitHub packages when a release is created
+# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#apache-maven-with-a-settings-path
+
+name: Build Pipeline
+
+on:          
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - '.github/**'
+      - 'version.txt'  
+      - '*.svg'
+      - '*.md'
+  workflow_dispatch: 
+  
+env:
+  CONTAINER_REPO: 'birdmodify/birdtest-backend-covid'
+  AZURE_WEBAPP_NAME: bird-api11-demo-testing
+  AZURE_WEBAPP_URL: https://bird-api11-demo-testing.azurewebsites.net
+  
+jobs:
+  set-version:
+    runs-on: ubuntu-latest    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+        with:        
+          ref: ${{ github.ref }}  
+       
+      - run: echo The tags is ${{ github.sha }}
+      - run: | 
+            var_date=$(date '+%Y%m%d')
+            echo var_date=${var_date}
+            echo "VERSION_NO=${var_date}-${GITHUB_RUN_NUMBER} " >> $GITHUB_ENV  
+      
+      - run: echo VERSION_NO=${VERSION_NO}
+      - run: echo ${VERSION_NO} > version.txt
+      - run: ls -la
+      
+      - name: Commit version files
+        run: |          
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add version.txt
+          git commit -m "update version to be ${VERSION_NO}"
+          
+      - name: Push version changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}  
+          
+  build-container:   
+
+    runs-on: ubuntu-latest
+    needs: [set-version]
+    environment: testing
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2.4.0
+      with:        
+        ref: ${{ github.ref }}  
+    
+    - name: Set up JDK 8
+      uses: actions/setup-java@v2
+      with:
+        java-version: '8'
+        distribution: 'adopt'
+        catch: maven
+
+    - name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    #- name: Cache SonarQube packages
+    #  uses: actions/cache@v1
+    #  with:
+    #    path: ~/.sonar/cache
+    #    key: ${{ runner.os }}-sonar
+    #    restore-keys: ${{ runner.os }}-sonar 
+
+    - name: Get Version
+      run: |
+        var_version=$(cat version.txt)
+        echo "VERSION_NO=${var_version}" >> $GITHUB_ENV
+    
+    - name: Check Version         
+      run: echo "Version is ${{ env.VERSION_NO }}"
+        
+    - name: Build with Maven
+      run: mvn package -Pcoverage
+      
+    - name: Generate JaCoCo badge
+      id: jacoco
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+        badges-directory: badges
+        generate-branches-badge: true
+        generate-summary: true
+
+    - run: | 
+        ls -l
+        ls -l badges
+        ls -l target/site/jacoco/
+      
+    - name: Log coverage percentages to workflow output
+      run: |
+        echo "coverage = ${{ steps.jacoco.outputs.coverage }}"
+        echo "branches = ${{ steps.jacoco.outputs.branches }}"
+
+    - name: Upload JaCoCo coverage report as a workflow artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: jacoco-report
+        path: target/site/jacoco/
+
+    - name: Commit and push the badge
+      uses: EndBug/add-and-commit@v7
+      with:
+        default_author: github_actions
+        message: 'commit badge'
+        add: '*.svg *.json'
+
+    #- name: Static Test
+    #  env:
+    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #    SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+    #  run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=test
+      
+    #- name: SonarQube Quality Gate Check      
+    #  uses: SonarSource/sonarqube-quality-gate-action@v1.0.0
+    #  timeout-minutes: 5
+    #  env:
+    #   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Upload artifact for deployment job
+      uses: actions/upload-artifact@v2
+      with:
+        name: birdtest-api
+        path: target/*.jar
+        
+    - name: Set up Docker Build
+      uses: docker/setup-buildx-action@v1
+
+    - name: Log in to registry
+      uses: docker/login-action@v1
+      with:
+         registry: https://index.docker.io/v1/
+         username: ${{ secrets.DOCKERHUB_USERNAME}}
+         password: ${{ secrets.DOCKERHUB_TOKEN }}     
+
+    - name: Build and push
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: ${{ env.CONTAINER_REPO }}:${{ env.VERSION_NO }}    
+
+    - name: Run the Anchore scan action itself with GitHub Advanced Security code scanning integration enabled
+      uses: anchore/scan-action@b08527d5ae7f7dc76f9621edb6e49eaf47933ccd
+      with:
+        image: "${{ env.CONTAINER_REPO }}:${{ env.VERSION_NO }}  "
+        # Generate a SARIF report and set the `sarif` output parameter after successful action execution.  This report is compatible with GitHub Automated Code Scanning (ACS), as the artifact to upload for display as a Code Scanning Alert report.
+        acs-report-enable: true
+        # Set this to any value to enable verbose debug output
+        #debug: # optional, default is false
+        # Set to false to avoid failing based on severity-cutoff. Default is to fail when severity-cutoff is reached (or surpassed)
+        fail-build: false # optional, default is true      
+        # Optionally specify the minimum vulnerability severity to trigger an "error" level ACS result.  Valid choices are "negligible", "low", "medium", "high" and "critical".  Any vulnerability with a severity less than this value will lead to a "warning" result.  Default is "medium".
+        severity-cutoff: critical # optional, default is medium
+        
+    - name: Upload Anchore Scan Report
+      uses: github/codeql-action/upload-sarif@v1
+      with:
+        sarif_file: results.sarif
+
+
+  deploy-to-testing:  
+      runs-on: ubuntu-latest
+      needs: [build-container]
+      environment: 
+        name: testing
+        url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+        
+      steps:
+      - name: Checkout Control
+        uses: actions/checkout@v2.4.0
+        with:        
+            ref: ${{ github.ref }}           
+
+      - name: Get Version
+        run: |
+          var_version=$(cat version.txt)
+          echo "VERSION_NO=${var_version}" >> $GITHUB_ENV
+
+      - name: Check Version         
+        run: echo "Version is ${{ env.VERSION_NO }}"
+          
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: 'production'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}        
+          images: 'index.docker.io/${{ env.CONTAINER_REPO }}:${{ env.VERSION_NO }}'
+          
+  DAST-Test:
+      name: OWASP ZAP Full Scan
+      runs-on: ubuntu-20.04
+      needs: [deploy-to-testing]
+      
+      steps:
+      - name: OWASP ZAP Full Scan
+        # You may pin to the exact commit or the version.
+        # uses: zaproxy/action-full-scan@1f35897c4c11af6b1203c36b67a5ba99c3c5b5f4
+        uses: zaproxy/action-full-scan@v0.3.0
+        with:
+          # GitHub Token to create issues in the repository
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Target URL
+          target: ${{ env.AZURE_WEBAPP_URL }}
